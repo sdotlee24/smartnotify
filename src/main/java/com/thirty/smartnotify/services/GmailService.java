@@ -2,6 +2,11 @@ package com.thirty.smartnotify.services;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.*;
+import com.theokanning.openai.OpenAiHttpException;
+import com.theokanning.openai.completion.chat.ChatCompletionChoice;
+import com.theokanning.openai.completion.chat.ChatCompletionRequest;
+import com.theokanning.openai.completion.chat.ChatMessage;
+import com.theokanning.openai.service.OpenAiService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -63,6 +68,11 @@ public class GmailService {
             return "Didn't contain keywords";
         }
 
+        String companyName = getCompanyName(contents);
+        if (companyName.equals("NULL")) {
+            return "Could not find company name in text";
+        }
+        //TODO store data (sender email, company name, application status) in db.
 
         return "";
     }
@@ -73,9 +83,26 @@ public class GmailService {
      * @return The name of the company if found; NULL if not found.
      */
     private String getCompanyName(String body) {
+        OpenAiService service = new OpenAiService(System.getenv("OPENAI_API_KEY"));
+        String context = "Your job is to extract the company name from the provided text. The output should only contain the company name, or \"NULL\" if there is no company name in the text";
+        ChatMessage config = new ChatMessage("system", context);
+        ChatMessage prompt = new ChatMessage("user", body);
 
+        List<ChatMessage> gptInput = List.of(config, prompt);
+        String res = "";
+        try {
+            ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
+                    .messages(gptInput)
+                    .model("gpt-3.5-turbo")
+                    .maxTokens(100)
+                    .build();
+            ChatCompletionChoice output = service.createChatCompletion(chatCompletionRequest).getChoices().get(0);
+            res = output.getMessage().getContent();
+        } catch (OpenAiHttpException e) {
+            System.out.println(e);
+        }
 
-        return "NULL";
+        return res;
     }
 
     /**
