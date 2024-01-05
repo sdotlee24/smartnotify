@@ -32,7 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-
+src/main/resources/credentials.json
 #authentication
 tokens/
 

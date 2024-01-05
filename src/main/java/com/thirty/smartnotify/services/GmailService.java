@@ -7,6 +7,11 @@ import com.theokanning.openai.completion.chat.ChatCompletionChoice;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
+import com.thirty.smartnotify.domain.Application;
+import com.thirty.smartnotify.model.StatusEnum;
+import com.thirty.smartnotify.repositories.ApplicationRepository;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -15,12 +20,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+
 @Service
 public class GmailService {
     private final Gmail gmail;
+    private final ApplicationRepository applicationRepository;
 
-    public GmailService(Gmail gmail) {
+    public GmailService(Gmail gmail, ApplicationRepository applicationRepository) {
         this.gmail = gmail;
+        this.applicationRepository = applicationRepository;
     }
     public String parseNewestMessage() {
         try {
@@ -36,7 +45,16 @@ public class GmailService {
 
             err = parseMessage(newMsg);
             if (err.equals("Didn't contain keywords")) {
-                //TODO query db if db contains the email of sender
+                //TODO query if sender's email exists in db, if this is the case its either
+                // 1. a promotion (advertisement) 2. a followup email regarding application
+                String senderEmail = getSenderEmail(newMsg.getPayload().getHeaders());
+                Optional<Application> application = applicationRepository.findApplicationBySenderEmail(senderEmail);
+                //TODO Might change this whole process by adding method "updateStatusBySenderEMail". However, must see if
+                // we need logic to be done that cannot be done with that method.
+                application.ifPresent(app -> {
+                    app.setStatus(StatusEnum.PENDING);
+                });
+
             }
         } catch (IOException e) {
             System.out.println(e);
@@ -72,8 +90,14 @@ public class GmailService {
         if (companyName.equals("NULL")) {
             return "Could not find company name in text";
         }
-        //TODO store data (sender email, company name, application status) in db.
 
+        //storing data (sender email, company name, application status) in db.
+        Application newApp = new Application(sender, companyName, StatusEnum.APPLIED);
+        try {
+            applicationRepository.save(newApp);
+        } catch (DataIntegrityViolationException | ConstraintViolationException e) {
+            System.out.println(e);
+        }
         return "";
     }
 
@@ -111,9 +135,6 @@ public class GmailService {
      * @return True if the text contains certain buzzwords. False if it is deemed to be an unrelated email.
      */
     private Boolean containsJobApplicationKeywords(String body) {
-        //TODO this does not look for keywords that indicate moving on to next steps,
-        // because that will be done by querying for the company name inside the db.
-        // The company name will be stored when the confirmation of application email comes.
         String[] keywords = {"apply", "application", "applying", "interview"};
         for (String keyword: keywords) {
             if (body.contains(keyword)) {
