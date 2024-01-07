@@ -10,9 +10,5 @@ class SmartNotifyApplicationTests {
 	void contextLoads() {
 	}
 
-	@Test
-	void verifyProfileRequestStrucuture() {
-
-	}
 
 }

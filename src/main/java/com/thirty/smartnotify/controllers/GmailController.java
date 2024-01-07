@@ -36,15 +36,12 @@ public class GmailController {
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode node = objectMapper.readTree(payload);
             System.out.println(payload);
-            System.out.println("arrived");
-            return ResponseEntity.ok("Message received and processed.");
+            String out = gmailService.parseNewestMessage();
+
+            return ResponseEntity.ok(out);
         } catch (Exception e) {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error handling data.");
         }
-        //TODO: Approach: 1. save company (via sender email, subject, etc) in db
-        // 2. when the next email comes (next stage) update the status of application in db
-        // Can use postgres.
-
     }
 }

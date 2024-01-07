@@ -48,12 +48,21 @@ public class GmailService {
                 //TODO query if sender's email exists in db, if this is the case its either
                 // 1. a promotion (advertisement) 2. a followup email regarding application
                 String senderEmail = getSenderEmail(newMsg.getPayload().getHeaders());
-                Optional<Application> application = applicationRepository.findApplicationBySenderEmail(senderEmail);
-                //TODO Might change this whole process by adding method "updateStatusBySenderEMail". However, must see if
-                // we need logic to be done that cannot be done with that method.
-                application.ifPresent(app -> {
-                    app.setStatus(StatusEnum.PENDING);
-                });
+                List<Application> application = applicationRepository.findApplicationBySenderEmail(senderEmail);
+                //first querying by email (instead of company name) to limit api calls to gpt. (need to call api to parse for company name)
+                if (!application.isEmpty()) {
+                    String body = newMsg.getPayload().getParts().getFirst().getBody().getData();
+                    String companyName = getCompanyName(body);
+                    if (companyName.equals("NULL")) {
+                        return "Couldn't parse mail";
+                    }
+                    if (body.contains(companyName)) {
+                        //updateStatus contains # rows updated
+                        int updateStatus = applicationRepository.updateApplicationBySenderEmail(senderEmail, StatusEnum.PENDING);
+                    }
+
+                }
+
 
             }
         } catch (IOException e) {
@@ -67,17 +76,12 @@ public class GmailService {
         if (msg == null) {
             return "Could not find new message";
         }
-        String msgID = msg.getId();
-        //TODO: if msgID in db, exit.
-        // If msgID not in db, put it in db. (3 scenarios: 1. Notification that application was received, 2. application was denied 3. application accepted)
-        if (msgID == null || msgID.isEmpty()) {
-            return "Message ID was not found";
-        }
+
         MessagePartBody body = msg.getPayload().getParts().getFirst().getBody();
         List<MessagePartHeader> headers = msg.getPayload().getHeaders();
-
         String sender = getSenderEmail(headers);
         String contents = body.getData();
+
         if (contents == null) {
             return "Mail has no body";
         }
