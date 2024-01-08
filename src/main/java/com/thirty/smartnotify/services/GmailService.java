@@ -138,7 +138,7 @@ public class GmailService {
      * @param body String containing the text portion of the email.
      * @return True if the text contains certain buzzwords. False if it is deemed to be an unrelated email.
      */
-    private Boolean containsJobApplicationKeywords(String body) {
+    public Boolean containsJobApplicationKeywords(String body) {
         String[] keywords = {"apply", "application", "applying", "interview"};
         for (String keyword: keywords) {
             if (body.contains(keyword)) {
