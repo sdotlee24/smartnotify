@@ -60,9 +60,7 @@ public class GmailService {
                         //updateStatus contains # rows updated
                         int updateStatus = applicationRepository.updateApplicationBySenderEmail(senderEmail, StatusEnum.PENDING);
                     }
-
                 }
-
 
             }
         } catch (IOException e) {
@@ -72,15 +70,13 @@ public class GmailService {
     }
     public String parseMessage(Message msg) throws IOException {
 
-        System.out.println(msg);
         if (msg == null) {
             return "Could not find new message";
         }
 
-        MessagePartBody body = msg.getPayload().getParts().getFirst().getBody();
         List<MessagePartHeader> headers = msg.getPayload().getHeaders();
         String sender = getSenderEmail(headers);
-        String contents = body.getData();
+        String contents = msg.getPayload().getParts().getFirst().getBody().getData();
 
         if (contents == null) {
             return "Mail has no body";
@@ -148,7 +144,7 @@ public class GmailService {
         return false;
     }
 
-    private String getSenderEmail(List<MessagePartHeader> headers) {
+    public String getSenderEmail(List<MessagePartHeader> headers) {
         String sender = "";
         for (MessagePartHeader h: headers) {
             if (h.getName().equals("X-Google-Sender-Delegation")) {
