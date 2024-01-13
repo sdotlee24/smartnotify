@@ -51,11 +51,13 @@ public class GmailServiceTest {
 
         when(mockMessage.getPayload()).thenReturn(mock(MessagePart.class));
         when(mockMessage.getPayload().getParts()).thenReturn(List.of(mock(MessagePart.class)));
-        when(mockMessage.getPayload().getParts().getFirst().getBody()).thenReturn(mockBody);
+        when(mockMessage.getPayload().getParts().get(0).getBody()).thenReturn(mockBody);
         when(mockMessage.getPayload().getHeaders()).thenReturn(List.of(mockHeader1, mockHeader2));
         when(gmailService.getSenderEmail(List.of(mockHeader1, mockHeader2))).thenReturn("foo@gmail.com");
 
     }
+
+
 
     @Test
     void testJobApplicationKeywords() {
@@ -69,7 +71,7 @@ public class GmailServiceTest {
     @Test
     void testGetSenderEmail() throws IOException {
         String res = gmailService.getSenderEmail(List.of(mockHeader1, mockHeader2));
-        assertEquals("real@foo.com", res);
+        assertEquals("foo@gmail.com", res);
     }
 
     /**
@@ -83,10 +85,27 @@ public class GmailServiceTest {
         assertEquals("Mail has no body", res);
 
     }
+
+    /**
+     * Tests the case where job application did not contain keywords.
+     * @throws IOException
+     */
     @Test
     void testParseMessage2() throws IOException {
-        mockBody.setData("abcde");
+        when(gmailService.containsJobApplicationKeywords("hello user, we have received your application."))
+                .thenReturn(false);
+        mockBody.setData("SGVsbG8gdXNlciwgd2UgaGF2ZSByZWNlaXZlZCB5b3VyIGFwcGxpY2F0aW9uLg==");
+        String res = gmailService.parseMessage(mockMessage);
+        assertEquals("Didn't contain keywords", res);
+
+
+
         
+    }
+
+    @Test
+    void testParseMessage3() throws IOException {
+
     }
 
 

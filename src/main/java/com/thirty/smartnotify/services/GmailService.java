@@ -51,7 +51,7 @@ public class GmailService {
                 List<Application> application = applicationRepository.findApplicationBySenderEmail(senderEmail);
                 //first querying by email (instead of company name) to limit api calls to gpt. (need to call api to parse for company name)
                 if (!application.isEmpty()) {
-                    String body = newMsg.getPayload().getParts().getFirst().getBody().getData();
+                    String body = newMsg.getPayload().getParts().get(0).getBody().getData();
                     String companyName = getCompanyName(body);
                     if (companyName.equals("NULL")) {
                         return "Couldn't parse mail";
@@ -76,7 +76,7 @@ public class GmailService {
 
         List<MessagePartHeader> headers = msg.getPayload().getHeaders();
         String sender = getSenderEmail(headers);
-        String contents = msg.getPayload().getParts().getFirst().getBody().getData();
+        String contents = msg.getPayload().getParts().get(0).getBody().getData();
 
         if (contents == null) {
             return "Mail has no body";
