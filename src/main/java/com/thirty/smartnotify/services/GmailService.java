@@ -1,7 +1,10 @@
 package com.thirty.smartnotify.services;
 
 import com.google.api.services.gmail.Gmail;
-import com.google.api.services.gmail.model.*;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.Message;
+import com.google.api.services.gmail.model.MessagePartHeader;
+import com.google.api.services.gmail.model.ModifyMessageRequest;
 import com.theokanning.openai.OpenAiHttpException;
 import com.theokanning.openai.completion.chat.ChatCompletionChoice;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
@@ -15,12 +18,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GmailService {
@@ -106,7 +107,7 @@ public class GmailService {
      * @param body The text portion of a given email.
      * @return The name of the company if found; NULL if not found.
      */
-    private String getCompanyName(String body) {
+    public String getCompanyName(String body) {
         OpenAiService service = new OpenAiService(System.getenv("OPENAI_API_KEY"));
         String context = "Your job is to extract the company name from the provided text. The output should only contain the company name, or \"NULL\" if there is no company name in the text";
         ChatMessage config = new ChatMessage("system", context);
@@ -188,5 +189,10 @@ public class GmailService {
         } catch (IOException e) {
             return "Failed to delete Label.";
         }
+    }
+    public String testMethod(String x) {
+        String y = "";
+        System.out.println("hello");
+        return y;
     }
 }

@@ -12,13 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 
 public class GmailServiceTest {
@@ -36,7 +38,7 @@ public class GmailServiceTest {
     private Message mockMessage;
     @Mock
     private MessagePartBody mockBody;
-
+    @Spy
     @InjectMocks
     private GmailService gmailService;
 
@@ -80,7 +82,7 @@ public class GmailServiceTest {
      */
     @Test
     void testParseMessage1() throws IOException {
-        mockBody.setData(null);
+        when(mockMessage.getPayload().getParts().get(0).getBody().getData()).thenReturn(null);
         String res = gmailService.parseMessage(mockMessage);
         assertEquals("Mail has no body", res);
 
@@ -92,19 +94,24 @@ public class GmailServiceTest {
      */
     @Test
     void testParseMessage2() throws IOException {
-        when(gmailService.containsJobApplicationKeywords("hello user, we have received your application."))
-                .thenReturn(false);
-        mockBody.setData("SGVsbG8gdXNlciwgd2UgaGF2ZSByZWNlaXZlZCB5b3VyIGFwcGxpY2F0aW9uLg==");
+        when(mockMessage.getPayload().getParts().get(0).getBody().getData()).thenReturn("SGVsbsf");
         String res = gmailService.parseMessage(mockMessage);
         assertEquals("Didn't contain keywords", res);
-
-
-
         
     }
 
     @Test
     void testParseMessage3() throws IOException {
+        when(mockMessage.getPayload().getParts().get(0).getBody().getData()).thenReturn("SGVsbG8gdXNlciwgd2UgaGF2ZSByZWNlaXZlZCB5b3VyIGFwcGxpY2F0aW9uLg==");
+        doReturn("NULL").when(gmailService).getCompanyName(anyString());
+        String res = gmailService.parseMessage(mockMessage);
+        assertEquals("Could not find company name in text", res);
+    }
+
+    @Test
+    void testParseMessage4() throws IOException {
+        when(mockMessage.getPayload().getParts().get(0).getBody().getData()).thenReturn("SGVsbG8gdXNlciwgd2UgaGF2ZSByZWNlaXZlZCB5b3VyIGFwcGxpY2F0aW9uLg==");
+        doReturn("SpaceX").when(gmailService).getCompanyName(anyString());
 
     }
 
